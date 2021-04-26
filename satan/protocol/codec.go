@@ -53,6 +53,10 @@ func (bf *StBuffer) WriteDataType(tp StProtocolType) error {
 	return bf.writeByte(byte(tp))
 }
 
+func (bf *StBuffer) WriteStructLength(l byte) error {
+	return bf.writeByte(l)
+}
+
 func (bf *StBuffer) WriteLength(l int) error {
 	var bs []byte
 	if l < 0 {
@@ -179,6 +183,10 @@ func (bf *StBuffer) ReadDataType() (tp StProtocolType, err error) {
 		return Unknown, errors.NewStError(1002)
 	}
 	return StTypeMap[_d], err
+}
+
+func (bf *StBuffer) ReadStructLength() (l byte, err error) {
+	return bf.readByte()
 }
 
 func (bf *StBuffer) ReadLength() (l int, err error) {

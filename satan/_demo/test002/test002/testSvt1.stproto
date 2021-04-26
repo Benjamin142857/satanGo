@@ -1,0 +1,10 @@
+struct Person {
+	name string
+	hobby []string
+	family map[string]Person
+}
+
+struct Mapper {
+    gap [][]int
+    hhTest map[string][][]int
+}
