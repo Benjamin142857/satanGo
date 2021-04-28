@@ -6,6 +6,7 @@ import (
 	"testing"
 )
 
+
 func TestStProto(t *testing.T) {
 	bf := protocol.NewStBuffer([]byte{})
 	p1 := NewPerson()
@@ -52,12 +53,12 @@ func TestStProto2(t *testing.T) {
 
 	fmt.Println(len(bf.Bytes()))
 
-	//mm := NewMapper()
-	//if err := mm.ReadDataBuf(bf); err != nil {
-	//	fmt.Println(err)
-	//	return
-	//}
-	//fmt.Println(mm.Gap[27][89])
+	mm := NewMapper()
+	if err := mm.ReadDataBuf(bf); err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(mm.Gap[27][89])
 }
 
 func matrixInt(x, y int) [][]int {

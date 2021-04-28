@@ -2,6 +2,7 @@ struct Person {
 	name string
 	hobby []string
 	family map[string]Person
+	lover Person
 }
 
 struct Mapper {

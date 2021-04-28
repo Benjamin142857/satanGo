@@ -113,6 +113,13 @@ func (bf *StBuffer) WriteLength(l int) error {
 	return nil
 }
 
+func (bf *StBuffer) WriteBytes(bs []byte) error {
+	if _, err := bf.buf.Write(bs); err != nil {
+		return errors.NewStError(1003, err)
+	}
+	return nil
+}
+
 func (bf *StBuffer) WriteDataBuf(tp StProtocolType, d interface{}) error {
 	switch tp {
 	case Byte:
@@ -187,6 +194,14 @@ func (bf *StBuffer) ReadDataType() (tp StProtocolType, err error) {
 
 func (bf *StBuffer) ReadStructLength() (l byte, err error) {
 	return bf.readByte()
+}
+
+func (bf *StBuffer) ReadBytes(l int) (bs []byte, err error) {
+	bs = make([]byte, l)
+	if _, err := bf.buf.Read(bs); err != nil {
+		return nil, errors.NewStError(1004, err)
+	}
+	return
 }
 
 func (bf *StBuffer) ReadLength() (l int, err error) {

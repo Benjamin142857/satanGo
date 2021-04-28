@@ -9,10 +9,11 @@ type Person struct {
 	Name   string             `json:"name"`
 	Hobby  []string           `json:"hobby"`
 	Family map[string]*Person `json:"family"`
+	Lover  *Person            `json:"lover"`
 }
 
 func (st *Person) WriteDataBuf(bf *protocol.StBuffer) error {
-	if err := bf.WriteStructLength(3); err != nil {
+	if err := bf.WriteStructLength(4); err != nil {
 		return err
 	}
 
@@ -68,6 +69,16 @@ func (st *Person) WriteDataBuf(bf *protocol.StBuffer) error {
 		}
 	}
 
+	if err := bf.WriteTag(3); err != nil {
+		return err
+	}
+	if err := bf.WriteDataType(protocol.Struct); err != nil {
+		return err
+	}
+	if err := st.Lover.WriteDataBuf(bf); err != nil {
+		return err
+	}
+
 	return nil
 }
 func (st *Person) ReadDataBuf(bf *protocol.StBuffer) error {
@@ -97,7 +108,6 @@ func (st *Person) ReadDataBuf(bf *protocol.StBuffer) error {
 			}
 			st.Name = d1
 		case byte(1):
-			d1 := make([]string, 0)
 			if _, err := bf.ReadDataType(); err != nil {
 				return err
 			}
@@ -105,6 +115,7 @@ func (st *Person) ReadDataBuf(bf *protocol.StBuffer) error {
 			if err != nil {
 				return err
 			}
+			d1 := make([]string, l1)
 			for i1 := 0; i1 < l1; i1++ {
 				_e2, err := bf.ReadDataBuf(protocol.String)
 				if err != nil {
@@ -114,7 +125,7 @@ func (st *Person) ReadDataBuf(bf *protocol.StBuffer) error {
 				if !ok {
 					return errors.NewStError(1004)
 				}
-				d1 = append(d1, e2)
+				d1[i1] = e2
 			}
 			st.Hobby = d1
 		case byte(2):
@@ -145,6 +156,12 @@ func (st *Person) ReadDataBuf(bf *protocol.StBuffer) error {
 				d1[k2] = v2
 			}
 			st.Family = d1
+		case byte(3):
+			d1 := NewPerson()
+			if err := d1.ReadDataBuf(bf); err != nil {
+				return err
+			}
+			st.Lover = d1
 		}
 
 	}
@@ -155,6 +172,7 @@ func NewPerson() *Person {
 		Name:   "",
 		Hobby:  make([]string, 0),
 		Family: make(map[string]*Person),
+		Lover:  nil,
 	}
 }
 
@@ -253,7 +271,6 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 
 		switch tg {
 		case byte(0):
-			d1 := make([][]int, 0)
 			if _, err := bf.ReadDataType(); err != nil {
 				return err
 			}
@@ -261,8 +278,8 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 			if err != nil {
 				return err
 			}
+			d1 := make([][]int, l1)
 			for i1 := 0; i1 < l1; i1++ {
-				e2 := make([]int, 0)
 				if _, err := bf.ReadDataType(); err != nil {
 					return err
 				}
@@ -270,6 +287,7 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 				if err != nil {
 					return err
 				}
+				e2 := make([]int, l2)
 				for i2 := 0; i2 < l2; i2++ {
 					_e3, err := bf.ReadDataBuf(protocol.Int)
 					if err != nil {
@@ -279,9 +297,9 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 					if !ok {
 						return errors.NewStError(1004)
 					}
-					e2 = append(e2, e3)
+					e2[i2] = e3
 				}
-				d1 = append(d1, e2)
+				d1[i1] = e2
 			}
 			st.Gap = d1
 		case byte(1):
@@ -305,7 +323,6 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 				if !ok {
 					return errors.NewStError(1004)
 				}
-				v2 := make([][]int, 0)
 				if _, err := bf.ReadDataType(); err != nil {
 					return err
 				}
@@ -313,8 +330,8 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 				if err != nil {
 					return err
 				}
+				v2 := make([][]int, l2)
 				for i2 := 0; i2 < l2; i2++ {
-					e3 := make([]int, 0)
 					if _, err := bf.ReadDataType(); err != nil {
 						return err
 					}
@@ -322,6 +339,7 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 					if err != nil {
 						return err
 					}
+					e3 := make([]int, l3)
 					for i3 := 0; i3 < l3; i3++ {
 						_e4, err := bf.ReadDataBuf(protocol.Int)
 						if err != nil {
@@ -331,9 +349,9 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 						if !ok {
 							return errors.NewStError(1004)
 						}
-						e3 = append(e3, e4)
+						e3[i3] = e4
 					}
-					v2 = append(v2, e3)
+					v2[i2] = e3
 				}
 				d1[k2] = v2
 			}
