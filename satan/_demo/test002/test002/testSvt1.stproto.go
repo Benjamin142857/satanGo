@@ -104,7 +104,7 @@ func (st *Person) ReadDataBuf(bf *protocol.StBuffer) error {
 			}
 			d1, ok := _d1.(string)
 			if !ok {
-				return errors.NewStError(1004)
+				return errors.ErrDecodeBuf
 			}
 			st.Name = d1
 		case byte(1):
@@ -123,7 +123,7 @@ func (st *Person) ReadDataBuf(bf *protocol.StBuffer) error {
 				}
 				e2, ok := _e2.(string)
 				if !ok {
-					return errors.NewStError(1004)
+					return errors.ErrDecodeBuf
 				}
 				d1[i1] = e2
 			}
@@ -147,7 +147,7 @@ func (st *Person) ReadDataBuf(bf *protocol.StBuffer) error {
 				}
 				k2, ok := _k2.(string)
 				if !ok {
-					return errors.NewStError(1004)
+					return errors.ErrDecodeBuf
 				}
 				v2 := NewPerson()
 				if err := v2.ReadDataBuf(bf); err != nil {
@@ -295,7 +295,7 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 					}
 					e3, ok := _e3.(int)
 					if !ok {
-						return errors.NewStError(1004)
+						return errors.ErrDecodeBuf
 					}
 					e2[i2] = e3
 				}
@@ -321,7 +321,7 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 				}
 				k2, ok := _k2.(string)
 				if !ok {
-					return errors.NewStError(1004)
+					return errors.ErrDecodeBuf
 				}
 				if _, err := bf.ReadDataType(); err != nil {
 					return err
@@ -347,7 +347,7 @@ func (st *Mapper) ReadDataBuf(bf *protocol.StBuffer) error {
 						}
 						e4, ok := _e4.(int)
 						if !ok {
-							return errors.NewStError(1004)
+							return errors.ErrDecodeBuf
 						}
 						e3[i3] = e4
 					}

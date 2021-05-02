@@ -60,7 +60,7 @@ func (bf *StBuffer) WriteStructLength(l byte) error {
 func (bf *StBuffer) WriteLength(l int) error {
 	var bs []byte
 	if l < 0 {
-		return errors.NewStError(1003)
+		return errors.ErrEncodeBuf
 	} else if l == 0 {
 		bs = make([]byte, 1)
 		bs[0] = 0
@@ -104,18 +104,18 @@ func (bf *StBuffer) WriteLength(l int) error {
 		bs[5] = byte(l >> 8)
 		bs[6] = byte(l)
 	} else {
-		return errors.NewStError(1005)
+		return errors.ErrExceedMaxLen
 	}
 
 	if _, err := bf.buf.Write(bs); err != nil {
-		return errors.NewStError(1003, err)
+		return errors.StErrorAppendMsg(errors.ErrEncodeBuf, err.Error())
 	}
 	return nil
 }
 
 func (bf *StBuffer) WriteBytes(bs []byte) error {
 	if _, err := bf.buf.Write(bs); err != nil {
-		return errors.NewStError(1003, err)
+		return errors.StErrorAppendMsg(errors.ErrEncodeBuf, err.Error())
 	}
 	return nil
 }
@@ -125,43 +125,43 @@ func (bf *StBuffer) WriteDataBuf(tp StProtocolType, d interface{}) error {
 	case Byte:
 		_d, ok := d.(byte)
 		if !ok {
-			return errors.NewStError(1002)
+			return errors.ErrEncodeType
 		}
 		return bf.writeByte(_d)
 	case Bool:
 		_d, ok := d.(bool)
 		if !ok {
-			return errors.NewStError(1002)
+			return errors.ErrEncodeType
 		}
 		return bf.writeBool(_d)
 	case Int:
 		_d, ok := d.(int)
 		if !ok {
-			return errors.NewStError(1002)
+			return errors.ErrEncodeType
 		}
 		return bf.writeInt(int32(_d))
 	case Long:
 		_d, ok := d.(int64)
 		if !ok {
-			return errors.NewStError(1002)
+			return errors.ErrEncodeType
 		}
 		return bf.writeLong(_d)
 	case Float:
 		_d, ok := d.(float32)
 		if !ok {
-			return errors.NewStError(1002)
+			return errors.ErrEncodeType
 		}
 		return bf.writeFloat(_d)
 	case Double:
 		_d, ok := d.(float64)
 		if !ok {
-			return errors.NewStError(1002)
+			return errors.ErrEncodeType
 		}
 		return bf.writeDouble(_d)
 	case String:
 		_d, ok := d.(string)
 		if !ok {
-			return errors.NewStError(1002)
+			return errors.ErrEncodeType
 		}
 		// length
 		if err := bf.WriteLength(len(_d)); err != nil {
@@ -172,11 +172,11 @@ func (bf *StBuffer) WriteDataBuf(tp StProtocolType, d interface{}) error {
 	case Struct:
 		_d, ok := d.(StStruct)
 		if !ok {
-			return errors.NewStError(1002)
+			return errors.ErrEncodeType
 		}
 		return _d.WriterDataBuf(bf)
 	default:
-		return errors.NewStError(1001)
+		return errors.ErrInvalidType
 	}
 }
 
@@ -187,7 +187,7 @@ func (bf *StBuffer) ReadTag() (tg byte, err error) {
 func (bf *StBuffer) ReadDataType() (tp StProtocolType, err error) {
 	_d, err := bf.readByte()
 	if StTypeMap[_d] == Unknown {
-		return Unknown, errors.NewStError(1002)
+		return Unknown, errors.ErrEncodeType
 	}
 	return StTypeMap[_d], err
 }
@@ -199,7 +199,7 @@ func (bf *StBuffer) ReadStructLength() (l byte, err error) {
 func (bf *StBuffer) ReadBytes(l int) (bs []byte, err error) {
 	bs = make([]byte, l)
 	if _, err := bf.buf.Read(bs); err != nil {
-		return nil, errors.NewStError(1004, err)
+		return nil, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 	}
 	return
 }
@@ -216,41 +216,41 @@ func (bf *StBuffer) ReadLength() (l int, err error) {
 	case 1:
 		bs = make([]byte, 1)
 		if _, err := bf.buf.Read(bs); err != nil {
-			return 0, errors.NewStError(1004, err)
+			return 0, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 		}
 		l = int(bs[0])
 	case 2:
 		bs = make([]byte, 2)
 		if _, err := bf.buf.Read(bs); err != nil {
-			return 0, errors.NewStError(1004, err)
+			return 0, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 		}
 		l = int(bs[1]) | int(bs[0])<<8
 	case 3:
 		bs = make([]byte, 3)
 		if _, err := bf.buf.Read(bs); err != nil {
-			return 0, errors.NewStError(1004, err)
+			return 0, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 		}
 		l = int(bs[2]) | int(bs[1])<<8 | int(bs[0])<<16
 	case 4:
 		bs = make([]byte, 4)
 		if _, err := bf.buf.Read(bs); err != nil {
-			return 0, errors.NewStError(1004, err)
+			return 0, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 		}
 		l = int(bs[3]) | int(bs[2])<<8 | int(bs[1])<<16 | int(bs[0])<<24
 	case 5:
 		bs = make([]byte, 5)
 		if _, err := bf.buf.Read(bs); err != nil {
-			return 0, errors.NewStError(1004, err)
+			return 0, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 		}
 		l = int(bs[4]) | int(bs[3])<<8 | int(bs[2])<<16 | int(bs[1])<<24 | int(bs[0])<<32
 	case 6:
 		bs = make([]byte, 6)
 		if _, err := bf.buf.Read(bs); err != nil {
-			return 0, errors.NewStError(1004, err)
+			return 0, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 		}
 		l = int(bs[5]) | int(bs[4])<<8 | int(bs[3])<<16 | int(bs[2])<<24 | int(bs[1])<<32 | int(bs[0])<<40
 	default:
-		return 0, errors.NewStError(1005)
+		return 0, errors.ErrExceedMaxLen
 	}
 
 	return l, err
@@ -282,19 +282,19 @@ func (bf *StBuffer) ReadDataBuf(tp StProtocolType) (d interface{}, err error) {
 	case Struct:
 		_d, ok := d.(StStruct)
 		if !ok {
-			return nil, errors.NewStError(1002)
+			return nil, errors.ErrEncodeType
 		}
 		err = _d.ReadDataBuf(bf)
 		d = _d
 	default:
-		return nil, errors.NewStError(1001)
+		return nil, errors.ErrInvalidType
 	}
 	return d, nil
 }
 
 func (bf *StBuffer) writeByte(d byte) error {
 	if err := bf.buf.WriteByte(d); err != nil {
-		return errors.NewStError(1003, err)
+		return errors.StErrorAppendMsg(errors.ErrEncodeBuf, err.Error())
 	}
 	return nil
 }
@@ -302,11 +302,11 @@ func (bf *StBuffer) writeByte(d byte) error {
 func (bf *StBuffer) writeBool(d bool) error {
 	if d {
 		if err := bf.buf.WriteByte(1); err != nil {
-			return errors.NewStError(1003, err)
+			return errors.StErrorAppendMsg(errors.ErrEncodeBuf, err.Error())
 		}
 	} else {
 		if err := bf.buf.WriteByte(0); err != nil {
-			return errors.NewStError(1003, err)
+			return errors.StErrorAppendMsg(errors.ErrEncodeBuf, err.Error())
 		}
 	}
 	return nil
@@ -316,7 +316,7 @@ func (bf *StBuffer) writeInt(d int32) error {
 	bs := make([]byte, 4)
 	binary.BigEndian.PutUint32(bs, uint32(d))
 	if _, err := bf.buf.Write(bs); err != nil {
-		return errors.NewStError(1003, err)
+		return errors.StErrorAppendMsg(errors.ErrEncodeBuf, err.Error())
 	}
 	return nil
 }
@@ -325,7 +325,7 @@ func (bf *StBuffer) writeLong(d int64) error {
 	bs := make([]byte, 8)
 	binary.BigEndian.PutUint64(bs, uint64(d))
 	if _, err := bf.buf.Write(bs); err != nil {
-		return errors.NewStError(1003, err)
+		return errors.StErrorAppendMsg(errors.ErrEncodeBuf, err.Error())
 	}
 	return nil
 }
@@ -334,7 +334,7 @@ func (bf *StBuffer) writeFloat(d float32) error {
 	bs := make([]byte, 4)
 	binary.BigEndian.PutUint32(bs, math.Float32bits(d))
 	if _, err := bf.buf.Write(bs); err != nil {
-		return errors.NewStError(1003, err)
+		return errors.StErrorAppendMsg(errors.ErrEncodeBuf, err.Error())
 	}
 	return nil
 }
@@ -343,14 +343,14 @@ func (bf *StBuffer) writeDouble(d float64) error {
 	bs := make([]byte, 8)
 	binary.BigEndian.PutUint64(bs, math.Float64bits(d))
 	if _, err := bf.buf.Write(bs); err != nil {
-		return errors.NewStError(1003, err)
+		return errors.StErrorAppendMsg(errors.ErrEncodeBuf, err.Error())
 	}
 	return nil
 }
 
 func (bf *StBuffer) writeString(d string) error {
 	if _, err := bf.buf.WriteString(d); err != nil {
-		return errors.NewStError(1003, err)
+		return errors.StErrorAppendMsg(errors.ErrEncodeBuf, err.Error())
 	}
 	return nil
 }
@@ -358,7 +358,7 @@ func (bf *StBuffer) writeString(d string) error {
 func (bf *StBuffer) readByte() (d byte, err error) {
 	d, err = bf.buf.ReadByte()
 	if err != nil {
-		return 0, errors.NewStError(1004, err)
+		return 0, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 	}
 	return d, nil
 }
@@ -366,14 +366,14 @@ func (bf *StBuffer) readByte() (d byte, err error) {
 func (bf *StBuffer) readBool() (d bool, err error) {
 	_d, err := bf.buf.ReadByte()
 	if err != nil {
-		return false, errors.NewStError(1004, err)
+		return false, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 	}
 	if _d == 1 {
 		d = true
 	} else if _d == 0 {
 		d = false
 	} else {
-		return false, errors.NewStError(1004, err)
+		return false, errors.ErrDecodeBuf
 	}
 	return d, nil
 }
@@ -381,7 +381,7 @@ func (bf *StBuffer) readBool() (d bool, err error) {
 func (bf *StBuffer) readInt() (d int32, err error) {
 	bs := make([]byte, 4)
 	if _, err = bf.buf.Read(bs); err != nil {
-		return d, errors.NewStError(1004, err)
+		return d, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 	}
 	d = int32(binary.BigEndian.Uint32(bs))
 	return d, nil
@@ -390,7 +390,7 @@ func (bf *StBuffer) readInt() (d int32, err error) {
 func (bf *StBuffer) readLong() (d int64, err error) {
 	bs := make([]byte, 8)
 	if _, err = bf.buf.Read(bs); err != nil {
-		return d, errors.NewStError(1004, err)
+		return d, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 	}
 	d = int64(binary.BigEndian.Uint64(bs))
 	return d, nil
@@ -399,7 +399,7 @@ func (bf *StBuffer) readLong() (d int64, err error) {
 func (bf *StBuffer) readFloat() (d float32, err error) {
 	bs := make([]byte, 4)
 	if _, err = bf.buf.Read(bs); err != nil {
-		return d, errors.NewStError(1004, err)
+		return d, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 	}
 	d = math.Float32frombits(binary.BigEndian.Uint32(bs))
 	return d, nil
@@ -408,7 +408,7 @@ func (bf *StBuffer) readFloat() (d float32, err error) {
 func (bf *StBuffer) readDouble() (d float64, err error) {
 	bs := make([]byte, 8)
 	if _, err = bf.buf.Read(bs); err != nil {
-		return d, errors.NewStError(1004, err)
+		return d, errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 	}
 	d = math.Float64frombits(binary.BigEndian.Uint64(bs))
 	return d, nil
@@ -417,7 +417,7 @@ func (bf *StBuffer) readDouble() (d float64, err error) {
 func (bf *StBuffer) readString(l int) (d string, err error) {
 	bs := make([]byte, l)
 	if _, err = bf.buf.Read(bs); err != nil {
-		return "", errors.NewStError(1004, err)
+		return "", errors.StErrorAppendMsg(errors.ErrDecodeBuf, err.Error())
 	}
 	return string(bs), nil
 }

@@ -1,44 +1,70 @@
 package errors
 
-import "fmt"
-
-var StErrMap = map[int]string{
-	1001: "Invalid StProtocolType",
-	1002: "StProtocol encode data type error",
-	1003: "StProtocol encode buffer error",
-	1004: "StProtocol decode buffer error",
-	1005: "The maximum support length of StProtocol is exceeded",
-	1006: "StProtocol Map key not support List, Map, Struct",
-}
+import (
+	"fmt"
+	"runtime"
+)
 
 type StError struct {
-	ErrCode         int
-	ErrMsg          string
-	ErrTrackBackMsg string
+	errCode int
+	errMsg  string
+	tbRoot  bool
 }
 
 func (e *StError) Error() string {
-	return fmt.Sprintf("StError[%v] %v%v", e.ErrCode, e.ErrMsg, e.ErrTrackBackMsg)
+	if e.tbRoot {
+		return fmt.Sprintf("StError[%v] %v", e.errCode, e.errMsg)
+	}
+	return e.errMsg
 }
 
-func NewStError(code int, tbErr ...error) *StError {
-	tbMsg := ""
-	for _, e := range tbErr {
-		if e != nil {
-			tbMsg += "\n" + e.Error()
-		}
-	}
+func (e *StError) Code() int {
+	return e.errCode
+}
 
-	if errMsg := StErrMap[code]; errMsg == "" {
-		return &StError{
-			ErrCode: 0,
-			ErrMsg: "unknown error",
-			ErrTrackBackMsg: tbMsg,
-		}
-	}
+func (e *StError) Equal(_e *StError) bool {
+	return e.errCode == _e.errCode
+}
+
+func NewStError(code int, msg string) *StError {
 	return &StError{
-		ErrCode:         code,
-		ErrMsg:          StErrMap[code],
-		ErrTrackBackMsg: tbMsg,
+		errCode: code,
+		errMsg:  msg,
+		tbRoot: true,
+	}
+}
+
+func StErrorAppendMsg(e *StError, msg string) *StError {
+	return NewStError(e.errCode, fmt.Sprintf("%v, %v", e.errMsg, msg))
+}
+
+func TrackBackStError(e *StError) *StError {
+	var tb string
+	pc, file, line, ok := runtime.Caller(1)
+	if !ok {
+		tb = "[get runtime.Caller error]"
+	}
+	pFunc := runtime.FuncForPC(pc)
+	tb = fmt.Sprintf("File \"%v\", line %v, in <%v>", file, line, pFunc.Name())
+	return &StError{
+		errCode: e.errCode,
+		errMsg: fmt.Sprintf("%v\n%v", tb, e.Error()),
+		tbRoot: false,
+	}
+}
+
+func TrackBackStErrorWithMsg(e *StError, msg string) *StError {
+	var tb string
+	pc, file, line, ok := runtime.Caller(1)
+	if !ok {
+		tb = "[get runtime.Caller error]"
+	}
+	pFunc := runtime.FuncForPC(pc)
+
+	tb = fmt.Sprintf("File \"%v\", line %v, in <%v>\n\t%v", file, line, pFunc.Name(), msg)
+	return &StError{
+		errCode: e.errCode,
+		errMsg: fmt.Sprintf("%v\n%v", tb, e.Error()),
+		tbRoot: false,
 	}
 }
